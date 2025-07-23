@@ -1091,13 +1091,17 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
 
   Future<void> _checkAndScrollToBottom() async {
     await waitForBuildIfPending();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        final maxScrollExtent = _scrollController.position.maxScrollExtent;
-        _scrollController.animateTo(maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-        scrollToBottomPending = false;
-      }
-    });
+    if (_scrollController.hasClients&&mounted) {
+      final maxScrollExtent = _scrollController.position.maxScrollExtent;
+      _scrollController.animateTo(maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+      scrollToBottomPending = false;
+    }
+    await waitForBuildIfPending();
+    if (_scrollController.hasClients&&mounted) {
+      final maxScrollExtent = _scrollController.position.maxScrollExtent;
+      _scrollController.jumpTo(maxScrollExtent, );
+      scrollToBottomPending = false;
+    }
   }
 
   Future<void> _pickMediaFromGallery() async {
