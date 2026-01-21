@@ -57,13 +57,15 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
 
         try {
           PackageInfo packageInfo = await PackageInfo.fromPlatform();
-          print("versionversion $version ${packageInfo.buildNumber}");
+          //print("versionversion $version ${packageInfo.buildNumber}");
           if ((version ?? 0) > int.parse(packageInfo.buildNumber))
             showAppUpdateDialog(context);
         } catch (e) {
           print(e);
         }
         setState(() {});
+
+       // showGotoSettingsDialog();
 
       });
     } catch (e) {
@@ -105,12 +107,7 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
             if(pref.getBool("settingsEnabled")==true)
             InkWell(
               onTap: () async {
-                await Navigator.push(context, MaterialPageRoute(builder: (context) => Settingspage()));
-                if (pref.getBool("data_cleared_restart_required") == true) {
-                  pref.remove("data_cleared_restart_required");
-                  _messages.clear();
-                  _initializeGemini();
-                }
+              gotoSettings();
               },
               child: Padding(
                 padding: const EdgeInsets.only(right: 8.0),
@@ -164,11 +161,24 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
   }
 
   Future<void> _initializeGemini() async {
+    print("getGeminiApiKey() ${getGeminiApiKey()}");
     try {
-      _model = GenerativeModel(model: "gemini-2.0-flash", apiKey: getGeminiApiKey());
+      _model = GenerativeModel(model: "gemini-flash-latest", apiKey: getGeminiApiKey());
+
+      // final response = await _model?.generateContent([
+      //   Content.text("Say 'Hello, I'm working!' if you can hear me")
+      // ]);
+      //
+      // print("✅ Success! Response: ${response?.text}");
+      // //print("Model: ${response?.modelVersion}");
+      // print("Tokens used: ${response?.usageMetadata?.totalTokenCount}");
+
+
       _addMessage(ChatMessage(id: DateTime.now().millisecondsSinceEpoch.toString(), type: MessageType.ai, content: aiInitialized, timestamp: DateTime.now()));
       _addMessage(ChatMessage(id: 'welcome', type: MessageType.ai, content: welcome, timestamp: DateTime.now()));
-    } catch (e) {
+    } catch (e,s) {
+      // print(e);
+      // print(s);
       _addMessage(
         ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -177,6 +187,7 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
           timestamp: DateTime.now(),
         ),
       );
+      showGotoSettingsDialog();
       _initializeGemini();
     }
   }
@@ -338,6 +349,9 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
           timestamp: DateTime.now(),
         ),
       );
+
+      showGotoSettingsDialog();
+
       _initializeGemini();
     } finally {
       setState(() {
@@ -372,7 +386,9 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
             fileSize: "${fileSizeInMB} MB",
           ),
         );
+        _scrollToBottom();
       }
+
     } catch (e) {
       _addMessage(
         ChatMessage(id: DateTime.now().millisecondsSinceEpoch.toString(), type: MessageType.ai, content: "Error picking file: $e", timestamp: DateTime.now()),
@@ -406,6 +422,7 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
             fileSize: "${fileSizeInMB} MB",
           ),
         );
+        _scrollToBottom();
       }
     } catch (e) {
       try {
@@ -619,6 +636,8 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
           ),
           save: true,
         );
+
+        _scrollToBottom();
       }
     });
   }
@@ -1129,6 +1148,7 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
             fileSize: "${fileSizeInMB} MB",
           ),
         );
+        _scrollToBottom();
       }
     } catch (e) {
       try {
@@ -1196,6 +1216,7 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
             fileSize: "${fileSizeInMB} MB",
           ),
         );
+        _scrollToBottom();
       }
     } catch (e) {
       _addMessage(
@@ -1272,6 +1293,47 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
     } catch (e) {
       print('Error getting video info: $e');
       return null;
+    }
+  }
+
+  void showGotoSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'API Key Required',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'This app uses the Gemini API with a free quota to generate FFmpeg commands. The API is only used for command generation, not for video processing.\n\nIf the quota is exceeded, you can add your own API key from Google AI Studio to continue using the app.\n\nSorry for any inconvenience. Go to Settings to add your API key.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              gotoSettings();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('Go to Settings', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Future<void> gotoSettings() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (context) => Settingspage()));
+    if (pref.getBool("data_cleared_restart_required") == true) {
+      pref.remove("data_cleared_restart_required");
+      _messages.clear();
+      _initializeGemini();
     }
   }
 }

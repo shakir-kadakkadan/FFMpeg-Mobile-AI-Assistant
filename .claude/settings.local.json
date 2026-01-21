@@ -7,7 +7,12 @@
       "Bash(flutter clean:*)",
       "Bash(flutter pub:*)",
       "Bash(flutter:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(open:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(adb uninstall:*)"
     ],
     "deny": []
   }

@@ -33,7 +33,7 @@ class _SettingspageState extends State<Settingspage> with TickerProviderStateMix
   void initState() {
     tecInitPrompt.text = initialPrompt;
     tecRetryPrompt.text = retryPrompt;
-    tecApiKey.text = pref.getString("gemini_api_key") ?? "";
+    tecApiKey.text = pref.getString("gemini_api_key_v2") ?? "";
 
     super.initState();
 
@@ -459,9 +459,9 @@ class _SettingspageState extends State<Settingspage> with TickerProviderStateMix
               ),
               onChanged: (value) {
                 if(value.trim().isEmpty){
-                  pref.remove("gemini_api_key");
+                  pref.remove("gemini_api_key_v2");
                 }else{
-                  pref.setString("gemini_api_key", value);
+                  pref.setString("gemini_api_key_v2", value);
                 }
               },
             ),
