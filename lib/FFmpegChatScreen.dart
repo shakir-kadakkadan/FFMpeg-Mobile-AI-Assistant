@@ -21,6 +21,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:gal/gal.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'ChatMessage.dart';
@@ -655,6 +656,30 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
     }
   }
 
+  Future<void> _saveToGallery(String filePath) async {
+    try {
+      await Gal.putVideo(filePath);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to gallery'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      try {
+        await Gal.putImage(filePath);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Saved to gallery'), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e2) {
+        _addMessage(
+          ChatMessage(id: DateTime.now().millisecondsSinceEpoch.toString(), type: MessageType.ai, content: "Error saving to gallery: $e2", timestamp: DateTime.now()),
+        );
+      }
+    }
+  }
+
   Widget _buildMessageBubble(ChatMessage message) {
     switch (message.type) {
       case MessageType.user:
@@ -795,50 +820,68 @@ class _FFmpegChatScreenState extends State<FFmpegChatScreen> {
         color: Colors.green[900],
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green),
-                  const SizedBox(width: 8),
-                  Text(message.content, style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.movie, color: Colors.white),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                getFileNameWithoutExtension(message.fileName),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              "." + getExtension(message.fileName),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                        Text(message.fileSize ?? '', style: TextStyle(color: Colors.grey[400])),
+                        const Icon(Icons.check_circle, color: Colors.green),
+                        const SizedBox(width: 8),
+                        Text(message.content, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.movie, color: Colors.white),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      getFileNameWithoutExtension(message.fileName),
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    ".${getExtension(message.fileName)}",
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              Text(message.fileSize ?? '', style: TextStyle(color: Colors.grey[400])),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _saveToGallery(message.filePath!),
+                    icon: const Icon(Icons.save_alt, color: Colors.white),
+                    label: const Text('Save', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                   ),
+                  const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: () => _shareFile(message.filePath!),
                     icon: const Icon(Icons.share, color: Colors.white),

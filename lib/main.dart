@@ -9,15 +9,10 @@ late SharedPreferences pref;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  pref=await SharedPreferences.getInstance();
-  if(kDebugMode){
-     doAdminProcess();
+  pref = await SharedPreferences.getInstance();
+  if (kDebugMode) {
+    doAdminProcess();
   }
 
   runApp(const MyApp());
 }
-
-
-
-
-
